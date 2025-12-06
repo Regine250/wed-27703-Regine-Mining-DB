@@ -55,6 +55,9 @@ repair_date	DATE	Date of repair
 issue_reported	VARCHAR2(100)	Problem description
 action_taken	VARCHAR2(100)	Repair details
 
+<img width="428" height="259" alt="image" src="https://github.com/user-attachments/assets/c99ee1fa-400d-41d4-bbc6-9d7f7622af7d" />
+
+
 # 4.Innovation or Improvement
 
 Unlike standard inventory systems, this project introduces automated PL/SQL maintenance management through:
