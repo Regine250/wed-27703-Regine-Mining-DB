@@ -117,3 +117,189 @@ BEGIN
 END;
 /
 
+ --FUNCTION GET OPERATOR NAME 
+ 
+CREATE OR REPLACE FUNCTION get_operator_name(
+    p_equipment_id NUMBER
+)
+RETURN VARCHAR2
+AS
+    v_name VARCHAR2(100);
+BEGIN
+    SELECT name INTO v_name
+    FROM operator
+    WHERE assigned_equipment = p_equipment_id;
+
+    RETURN v_name;
+END;
+/
+
+
+## 3. CURSOR
+--CURSOR 
+
+
+DECLARE
+    CURSOR c_equipment IS
+        SELECT equipment_id, name, type, status
+        FROM equipment;
+
+    v_id     equipment.equipment_id%TYPE;
+    v_name   equipment.name%TYPE;
+    v_type   equipment.type%TYPE;
+    v_status equipment.status%TYPE;
+BEGIN
+    OPEN c_equipment;
+
+    LOOP
+        FETCH c_equipment INTO v_id, v_name, v_type, v_status;
+        EXIT WHEN c_equipment%NOTFOUND;
+
+        DBMS_OUTPUT.PUT_LINE('ID: ' || v_id ||
+                             ' | Name: ' || v_name ||
+                             ' | Type: ' || v_type ||
+                             ' | Status: ' || v_status);
+    END LOOP;
+
+    CLOSE c_equipment;
+END;
+/
+
+
+-- CURSOR REPAIRS
+
+
+DECLARE
+    CURSOR c_repairs IS
+        SELECT repair_id, repair_date, issue_reported, action_taken
+        FROM repair_history
+        WHERE equipment_id = 1;
+
+    v_id   repair_history.repair_id%TYPE;
+    v_date repair_history.repair_date%TYPE;
+    v_issue repair_history.issue_reported%TYPE;
+    v_action repair_history.action_taken%TYPE;
+BEGIN
+    OPEN c_repairs;
+
+    LOOP
+        FETCH c_repairs INTO v_id, v_date, v_issue, v_action;
+        EXIT WHEN c_repairs%NOTFOUND;
+
+        DBMS_OUTPUT.PUT_LINE('Repair: ' || v_id ||
+                             ' | Date: ' || v_date ||
+                             ' | Issue: ' || v_issue ||
+                             ' | Action: ' || v_action);
+    END LOOP;
+
+    CLOSE c_repairs;
+END;
+/
+## 4. PACKAGE
+--PACKAGE MINING_PKG
+
+CREATE OR REPLACE PACKAGE mining_pkg AS
+    
+    -- Function: Count total repairs for an equipment
+    FUNCTION total_repairs(p_equipment_id NUMBER)
+    RETURN NUMBER;
+
+    -- Procedure: Display details of equipment + its operator + repair history
+    PROCEDURE equipment_report(p_equipment_id NUMBER);
+
+END mining_pkg;
+/
+
+## PACKAGE
+
+--PACKAGE BODY 
+
+CREATE OR REPLACE PACKAGE BODY mining_pkg AS
+
+    ----------------------------------------------------------------------
+    -- FUNCTION: Total number of repairs for an equipment
+    ----------------------------------------------------------------------
+    FUNCTION total_repairs(p_equipment_id NUMBER)
+    RETURN NUMBER
+    AS
+        v_count NUMBER;
+    BEGIN
+        SELECT COUNT(*) INTO v_count
+        FROM repair
+        WHERE equipment_id = p_equipment_id;
+
+        RETURN v_count;
+    END total_repairs;
+
+    ----------------------------------------------------------------------
+    -- PROCEDURE: Equipment Report
+    -- Shows:
+    --   ✓ Equipment details
+    --   ✓ Operator assigned
+    --   ✓ All repairs for that equipment (cursor FOR LOOP)
+    ----------------------------------------------------------------------
+    PROCEDURE equipment_report(p_equipment_id NUMBER)
+    AS
+        v_name       equipment.name%TYPE;
+        v_type       equipment.type%TYPE;
+        v_status     equipment.status%TYPE;
+        v_operator   operator.name%TYPE;
+    BEGIN
+        ------------------------------------------------------------------
+        -- 1. Fetch Equipment Data
+        ------------------------------------------------------------------
+        SELECT name, type, status 
+        INTO v_name, v_type, v_status
+        FROM equipment
+        WHERE equipment_id = p_equipment_id;
+
+        DBMS_OUTPUT.PUT_LINE('=== EQUIPMENT DETAILS ===');
+        DBMS_OUTPUT.PUT_LINE('ID: ' || p_equipment_id);
+        DBMS_OUTPUT.PUT_LINE('Name: ' || v_name);
+        DBMS_OUTPUT.PUT_LINE('Type: ' || v_type);
+        DBMS_OUTPUT.PUT_LINE('Status: ' || v_status);
+
+
+
+        ------------------------------------------------------------------
+        -- 2. Fetch Operator Assigned
+        ------------------------------------------------------------------
+        BEGIN
+            SELECT name INTO v_operator
+            FROM operator
+            WHERE assigned_equipment = p_equipment_id;
+
+            DBMS_OUTPUT.PUT_LINE('Operator: ' || v_operator);
+
+        EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                DBMS_OUTPUT.PUT_LINE('Operator: NONE ASSIGNED');
+        END;
+
+
+
+        ------------------------------------------------------------------
+        -- 3. List Repair History (cursor FOR LOOP)
+        ------------------------------------------------------------------
+        DBMS_OUTPUT.PUT_LINE(' ');
+        DBMS_OUTPUT.PUT_LINE('=== REPAIR HISTORY ===');
+
+        FOR rec IN (
+            SELECT repair_id, repair_da, issue_reported, action_taken
+            FROM repair
+            WHERE equipment_id = p_equipment_id
+            ORDER BY repair_da
+        )
+        LOOP
+            DBMS_OUTPUT.PUT_LINE(
+                'Repair ID: ' || rec.repair_id ||
+                ' | Date: ' || rec.repair_da ||
+                ' | Issue: ' || rec.issue_reported ||
+                ' | Action: ' || rec.action_taken
+            );
+        END LOOP;
+
+    END equipment_report;
+
+END mining_pkg;
+/
