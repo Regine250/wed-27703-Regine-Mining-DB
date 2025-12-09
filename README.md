@@ -145,6 +145,6 @@ The system will enable mining administrators to:
 # Phase VIII: Final Presentation & GitHub Report ✔️
 The last phase involved presenting the completed system, showcasing features, and demonstrating the technical implementation. All documentation, ERDs, and source code were uploaded to GitHub for final review and grading.
 # 8. 📄 License
-Submitted as Capstone Project for Database Development with PL/SQL (2024-2025) at AUCA.
+Submitted as Capstone Project for Database Development with PL/SQL (2025-2026) at AUCA.
 
 Regine P Igihozo.
